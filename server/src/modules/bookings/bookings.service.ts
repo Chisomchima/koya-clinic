@@ -1,5 +1,5 @@
-import { randomUUID } from 'node:crypto';
 import type { QueryFilter } from 'mongoose';
+import { newBookingReference } from '../../lib/booking-reference.js';
 import { decodeCursor, encodeCursor } from '../../lib/cursor.js';
 import { badRequest, conflict, notFound, unprocessable } from '../../lib/http-error.js';
 import { isDuplicateKeyError } from '../../lib/mongo-errors.js';
@@ -63,34 +63,38 @@ export async function createBooking(
   if (!slot) throw notFound('slot not found');
   if (slot.startAt.getTime() <= Date.now()) throw badRequest('slot has already started');
 
-  try {
-    // One document, one atomic write: the booking and its idempotency key are saved together.
-    // Unique indexes decide every race: one confirmed booking per slot, one booking per key.
-    const booking = await Booking.create({
-      _id: `bk_${randomUUID()}`,
-      slotId: input.slot_id,
-      name: input.name,
-      email: input.email,
-      status: 'confirmed',
-      createdAt: new Date(),
-      ...(idempotency && {
-        idempotencyKey: idempotency.key,
-        requestHash: idempotency.requestHash,
-      }),
-    });
-    return { booking: toBookingDto(booking.toObject()), replayed: false };
-  } catch (err) {
-    if (!isDuplicateKeyError(err)) throw err;
+  // A reference collision is astronomically unlikely, but if it happens, draw a new one.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      // One document, one atomic write: the booking and its idempotency key are saved together.
+      // Unique indexes decide every race: one confirmed booking per slot, one booking per key.
+      const booking = await Booking.create({
+        _id: newBookingReference(),
+        slotId: input.slot_id,
+        name: input.name,
+        email: input.email,
+        status: 'confirmed',
+        createdAt: new Date(),
+        ...(idempotency && {
+          idempotencyKey: idempotency.key,
+          requestHash: idempotency.requestHash,
+        }),
+      });
+      return { booking: toBookingDto(booking.toObject()), replayed: false };
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) throw err;
 
-    // Two retries with the same key raced and the other one won. The loser may be rejected
-    // by *either* unique index (both target the same slot), so check the key first:
-    // otherwise a retry could be told "slot is already booked" about its own booking.
-    if (idempotency) {
-      const winner = await findIdempotentBooking(idempotency);
-      if (winner) return { booking: winner, replayed: true };
+      // Two retries with the same key raced and the other one won. The loser may be rejected
+      // by *either* unique index (both target the same slot), so check the key first:
+      // otherwise a retry could be told "slot is already booked" about its own booking.
+      if (idempotency) {
+        const winner = await findIdempotentBooking(idempotency);
+        if (winner) return { booking: winner, replayed: true };
+      }
+      if (isDuplicateKeyError(err, 'slotId')) throw conflict('slot is already booked');
+      if (isDuplicateKeyError(err, '_id') && attempt < 3) continue;
+      throw err;
     }
-    if (isDuplicateKeyError(err, 'slotId')) throw conflict('slot is already booked');
-    throw err;
   }
 }
 
