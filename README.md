@@ -77,9 +77,13 @@ To run the end-to-end suite against a live deployment (warning: it calls `/reset
 
 ## Deploy
 
-On Render, choose **New → Blueprint** with this repo ([`render.yaml`](render.yaml)) and set
-`MONGODB_URI` and `API_KEY`. In Atlas, allow network access from `0.0.0.0/0`. Optional
-variables are listed in [`server/.env.example`](server/.env.example).
+**Vercel:** import the repo; [`vercel.json`](vercel.json) builds both packages, serves the React
+app as static files, and routes every other request to the Express app in
+[`api/index.js`](api/index.js). Set `MONGODB_URI` and `API_KEY` in the project's environment
+variables. **Render:** a [`render.yaml`](render.yaml) blueprint runs it as one Node server.
+
+Either way, allow network access from `0.0.0.0/0` in Atlas (both hosts use changing IPs).
+Optional variables are listed in [`server/.env.example`](server/.env.example).
 
 ## What I'd do next
 
