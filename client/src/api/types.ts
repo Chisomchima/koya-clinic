@@ -1,5 +1,3 @@
-/** Shapes returned by the server (see docs/openapi.json). */
-
 export interface Slot {
   id: string;
   provider: string;

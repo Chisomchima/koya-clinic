@@ -10,7 +10,7 @@ const GRADIENTS = [
   'from-[#0891B2] to-[#5ED3EA]',
 ];
 
-/** A stable colour per name (keyed on its initials), so each provider always looks the same. */
+/** The same colour for a name every time. */
 const gradientFor = (name: string) =>
   GRADIENTS[[...initials(name)].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % GRADIENTS.length]!;
 

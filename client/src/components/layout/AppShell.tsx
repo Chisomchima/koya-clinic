@@ -30,7 +30,7 @@ export function AppShell() {
   );
 }
 
-/** Keeps showing the old page while it animates out, instead of swapping to the new one early. */
+/** Keeps the old page on screen while it animates out. */
 function FrozenOutlet() {
   const outlet = useOutlet();
   const [frozen] = useState(outlet);

@@ -11,8 +11,7 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 10_000, refetchOnWindowFocus: true } },
 });
 
-// Client routes must not overlap the API's paths (/slots, /bookings), which the server owns.
-// The server lists these same paths in CLIENT_ROUTES (server/src/app.ts).
+// Must not overlap API paths; mirrored in CLIENT_ROUTES in server/src/app.ts.
 const router = createBrowserRouter([
   {
     element: <AppShell />,

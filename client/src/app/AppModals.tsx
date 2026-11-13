@@ -7,12 +7,11 @@ import { AppModalsContext } from './app-modals-context';
 
 type AppModal = 'onboarding' | 'find-booking' | null;
 
-/** Modals that can be opened from anywhere (header, landing page, error states). */
 export function AppModalsProvider({ children }: { children: ReactNode }) {
   const [modal, setModal] = useState<AppModal>(null);
   const { pathname } = useLocation();
 
-  // First visit: welcome people with a short tour of how booking works.
+  // Show the tour on a first visit.
   useEffect(() => {
     if (pathname !== '/' || onboarding.isDone()) return;
     const timer = setTimeout(() => setModal('onboarding'), 900);

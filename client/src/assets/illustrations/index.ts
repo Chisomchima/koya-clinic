@@ -1,7 +1,4 @@
-/**
- * Illustrations from unDraw (https://undraw.co, free to use under the unDraw licence),
- * recoloured from unDraw's default #6C63FF to the brand blue #006BFF.
- */
+// unDraw illustrations (https://undraw.co), recoloured to the brand blue.
 import cancel from './cancel.svg';
 import chooseDoctor from './choose-doctor.svg';
 import confirmed from './confirmed.svg';

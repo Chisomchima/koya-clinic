@@ -1,6 +1,5 @@
 import { ApiError } from '../api/http';
 
-/** A message suitable to show a patient, for any error. */
 export function describeError(err: unknown): string {
   if (err instanceof ApiError) {
     if (err.status === 409) return 'Someone just grabbed this time. Please pick another one.';

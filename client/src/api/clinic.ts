@@ -6,7 +6,6 @@ export const clinicApi = {
 
   getBooking: (id: string) => request<Booking>(`/bookings/${encodeURIComponent(id)}`),
 
-  /** The idempotency key makes retries safe: the server never books twice for one key. */
   createBooking: (input: NewBooking, idempotencyKey: string) =>
     request<Booking>('/bookings', {
       method: 'POST',

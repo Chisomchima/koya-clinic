@@ -10,10 +10,7 @@ interface TimeListProps {
   onConfirm: (slot: Slot) => void;
 }
 
-/**
- * Calendly-style time buttons: picking a time splits it into the time and a "Next" button.
- * Slots taken by someone else while the list is open animate out.
- */
+/** Picking a time splits it into the time and a "Next" button. Taken slots animate out. */
 export function TimeList({ slots, selectedId, showProvider, onSelect, onConfirm }: TimeListProps) {
   return (
     <ul className="space-y-2">
