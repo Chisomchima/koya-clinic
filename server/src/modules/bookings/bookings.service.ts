@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { notFound } from '../../lib/http-error.js';
+import { badRequest, notFound } from '../../lib/http-error.js';
 import { Booking, type BookingDoc, type BookingStatus } from '../../models/booking.model.js';
 import { Slot } from '../../models/slot.model.js';
 import type { CreateBookingInput } from './bookings.schema.js';
@@ -27,6 +27,7 @@ const toBookingDto = (b: StoredBooking): BookingDto => ({
 export async function createBooking(input: CreateBookingInput): Promise<BookingDto> {
   const slot = await Slot.findById(input.slot_id).lean();
   if (!slot) throw notFound('slot not found');
+  if (slot.startAt.getTime() <= Date.now()) throw badRequest('slot has already started');
 
   const booking = await Booking.create({
     _id: `bk_${randomUUID()}`,
