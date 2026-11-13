@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { env } from '../config/env.js';
+import { idempotency } from '../middleware/idempotency.js';
 import { requireApiKey } from '../middleware/require-api-key.js';
 import * as bookings from '../modules/bookings/bookings.controller.js';
 import * as resetController from '../modules/reset/reset.controller.js';
@@ -12,7 +13,7 @@ apiRouter.use(requireApiKey(env.API_KEY));
 
 apiRouter.post('/reset', resetController.reset);
 apiRouter.get('/slots', slots.list);
-apiRouter.post('/bookings', bookings.create);
+apiRouter.post('/bookings', idempotency(), bookings.create);
 apiRouter.get('/bookings', bookings.list);
 apiRouter.get('/bookings/:id', bookings.getById);
 apiRouter.delete('/bookings/:id', bookings.cancel);
