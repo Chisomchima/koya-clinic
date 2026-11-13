@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { env } from '../config/env.js';
+import { limitAttemptsPerEmail } from '../middleware/booking-guards.js';
 import { idempotency } from '../middleware/idempotency.js';
 import { requireApiKey } from '../middleware/require-api-key.js';
 import * as bookings from '../modules/bookings/bookings.controller.js';
@@ -13,7 +14,7 @@ apiRouter.use(requireApiKey(env.API_KEY));
 
 apiRouter.post('/reset', resetController.reset);
 apiRouter.get('/slots', slots.list);
-apiRouter.post('/bookings', idempotency(), bookings.create);
+apiRouter.post('/bookings', idempotency(), limitAttemptsPerEmail, bookings.create);
 apiRouter.get('/bookings', bookings.list);
 apiRouter.get('/bookings/:id', bookings.getById);
 apiRouter.delete('/bookings/:id', bookings.cancel);

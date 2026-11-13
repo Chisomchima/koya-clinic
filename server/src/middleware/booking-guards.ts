@@ -1,0 +1,16 @@
+import { EMAIL_RATE_LIMIT } from '../config/constants.js';
+import { normalizeEmail } from '../modules/bookings/bookings.schema.js';
+import { rateLimit } from './rate-limit.js';
+
+/**
+ * Level 5: at most 5 booking attempts per email per minute. Failed attempts count too,
+ * because this runs before the body is validated or the slot is looked up.
+ */
+export const limitAttemptsPerEmail = rateLimit({
+  ...EMAIL_RATE_LIMIT,
+  keyFor: (req) => {
+    const email = normalizeEmail((req.body as { email?: unknown } | undefined)?.email);
+    return email ? `email:${email}` : undefined;
+  },
+  message: 'too many booking attempts for this email, please try again later',
+});
