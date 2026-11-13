@@ -27,7 +27,7 @@ const STEPS: { illustration: IllustrationName; title: string; body: string }[] =
 
 export function OnboardingModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
-    <Modal open={open} onClose={onClose} size="md">
+    <Modal open={open} onClose={onClose}>
       <OnboardingSteps onClose={onClose} />
     </Modal>
   );

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dayKey, durationMinutes, initials, monthGrid, parseDayKey, relativeDay } from './format';
+import { dayKey, durationMinutes, initials, monthGrid, relativeDay } from './format';
 
 describe('monthGrid', () => {
   it('starts on Monday and pads to whole weeks', () => {
@@ -16,11 +16,9 @@ describe('monthGrid', () => {
   });
 });
 
-describe('dayKey / parseDayKey', () => {
-  it('round-trips a local calendar day', () => {
-    const date = new Date(2030, 4, 7, 15, 30);
-    expect(dayKey(date)).toBe('2030-05-07');
-    expect(parseDayKey('2030-05-07').getDate()).toBe(7);
+describe('dayKey', () => {
+  it('is the local calendar day', () => {
+    expect(dayKey(new Date(2030, 4, 7, 15, 30))).toBe('2030-05-07');
   });
 });
 

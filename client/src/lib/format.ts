@@ -6,7 +6,6 @@ const monthYear = fmt({ month: 'long', year: 'numeric' });
 const time = fmt({ hour: 'numeric', minute: '2-digit' });
 
 export const formatLongDay = (d: Date | string) => longDay.format(new Date(d));
-export const formatShortDay = (d: Date | string) => shortDay.format(new Date(d));
 export const formatMonthYear = (d: Date) => monthYear.format(d);
 export const formatTime = (d: Date | string) => time.format(new Date(d));
 export const formatTimeRange = (start: string, end: string) =>
@@ -16,20 +15,14 @@ export const formatDateTime = (iso: string) => `${formatLongDay(iso)} at ${forma
 export const durationMinutes = (start: string, end: string) =>
   Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60_000);
 
-/** The viewer's time zone, e.g. "Africa/Lagos". */
 export const localTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-/** A local-calendar key (YYYY-MM-DD). */
+/** YYYY-MM-DD in local time. */
 export const dayKey = (d: Date | string) => {
   const date = new Date(d);
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
   return `${date.getFullYear()}-${mm}-${dd}`;
-};
-
-export const parseDayKey = (key: string) => {
-  const [y, m, d] = key.split('-').map(Number) as [number, number, number];
-  return new Date(y, m - 1, d);
 };
 
 export const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
@@ -71,5 +64,5 @@ export function relativeDay(iso: string, now = new Date()) {
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
   if (key === dayKey(tomorrow)) return 'tomorrow';
-  return formatShortDay(iso);
+  return shortDay.format(new Date(iso));
 }

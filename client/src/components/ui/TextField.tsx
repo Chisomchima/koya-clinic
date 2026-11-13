@@ -1,4 +1,4 @@
-import { forwardRef, useId, type InputHTMLAttributes } from 'react';
+import { useId, type InputHTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 
 interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -6,19 +6,14 @@ interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   hint?: string;
 }
 
-export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
-  { label, hint, className, id, ...props },
-  ref,
-) {
-  const generatedId = useId();
-  const inputId = id ?? generatedId;
+export function TextField({ label, hint, className, ...props }: TextFieldProps) {
+  const inputId = useId();
   return (
     <div className="space-y-1.5">
       <label htmlFor={inputId} className="block text-sm font-semibold text-ink">
         {label}
       </label>
       <input
-        ref={ref}
         id={inputId}
         aria-describedby={hint ? `${inputId}-hint` : undefined}
         className={cn(
@@ -34,4 +29,4 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
       )}
     </div>
   );
-});
+}

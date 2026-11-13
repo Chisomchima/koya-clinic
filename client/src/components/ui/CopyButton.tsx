@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { CheckIcon, CopyIcon } from './Icons';
 
-export function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) {
+export function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -11,7 +11,7 @@ export function CopyButton({ text, label = 'Copy' }: { text: string; label?: str
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
-      // clipboard blocked; the text is still visible to copy by hand
+      // clipboard blocked: the reference is still on screen
     }
   }
 
@@ -19,7 +19,7 @@ export function CopyButton({ text, label = 'Copy' }: { text: string; label?: str
     <button
       type="button"
       onClick={() => void copy()}
-      aria-label={copied ? 'Copied' : label}
+      aria-label={copied ? 'Copied' : 'Copy'}
       className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-primary-500 transition hover:bg-primary-50"
     >
       <AnimatePresence mode="wait" initial={false}>
@@ -31,7 +31,7 @@ export function CopyButton({ text, label = 'Copy' }: { text: string; label?: str
           className="inline-flex items-center gap-1.5"
         >
           {copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
-          {copied ? 'Copied!' : label}
+          {copied ? 'Copied!' : 'Copy'}
         </motion.span>
       </AnimatePresence>
     </button>

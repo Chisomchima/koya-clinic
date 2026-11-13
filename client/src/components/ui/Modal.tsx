@@ -9,20 +9,16 @@ interface ModalProps {
   title?: ReactNode;
   description?: ReactNode;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
-  /** When false, Escape and backdrop clicks don't close it (e.g. while saving). */
+  size?: 'sm' | 'md';
+  /** False while saving: Escape and backdrop clicks are ignored. */
   dismissible?: boolean;
-  /** Content shown above the title, e.g. an illustration. */
+  /** Shown above the title, e.g. an illustration. */
   hero?: ReactNode;
 }
 
-const widths = { sm: 'sm:max-w-md', md: 'sm:max-w-lg', lg: 'sm:max-w-2xl' };
+const widths = { sm: 'sm:max-w-md', md: 'sm:max-w-lg' };
 
-/**
- * An accessible, animated dialog: focus moves in and is trapped, Escape closes it,
- * page scrolling is locked, and focus returns to where it was afterwards.
- * On phones it slides up as a bottom sheet.
- */
+/** Accessible dialog: traps focus, closes on Escape, locks scrolling. A bottom sheet on phones. */
 export function Modal(props: ModalProps) {
   return createPortal(
     <AnimatePresence>{props.open && <ModalPanel {...props} />}</AnimatePresence>,
@@ -55,7 +51,6 @@ function ModalPanel({
       ) ?? []),
     ];
 
-    // Focus the first form field if there is one, otherwise the panel itself.
     (panel?.querySelector<HTMLElement>('input, textarea, select') ?? panel)?.focus();
 
     const overflow = document.body.style.overflow;

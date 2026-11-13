@@ -4,7 +4,7 @@ import { cn } from '../../lib/cn';
 import { Spinner } from './Spinner';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type Size = 'sm' | 'md' | 'lg';
+type Size = 'md' | 'lg';
 
 const variants: Record<Variant, string> = {
   primary: 'bg-primary-500 text-white shadow-sm shadow-primary-500/30 hover:bg-primary-700',
@@ -15,12 +15,11 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
-  sm: 'h-9 px-4 text-sm',
   md: 'h-11 px-5 text-[15px]',
   lg: 'h-13 px-7 text-base',
 };
 
-export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
+interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   children?: ReactNode;
   variant?: Variant;
   size?: Size;

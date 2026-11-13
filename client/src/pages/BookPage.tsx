@@ -18,10 +18,7 @@ import { celebrate, stopCelebrating } from '../lib/celebrate';
 import { dayKey, durationMinutes } from '../lib/format';
 import { recentBookings } from '../lib/storage';
 
-/**
- * The booking flow: doctor → date & time → details (modal) → confirmation (modal).
- * The chosen doctor and day live in the URL, so the browser's back button steps back.
- */
+/** Doctor → date & time → details → confirmation. Doctor and day live in the URL. */
 export function BookPage() {
   const availability = useAvailability();
   const queryClient = useQueryClient();
@@ -42,16 +39,13 @@ export function BookPage() {
       ? availability.openSlots
       : availability.openSlots.filter((s) => s.provider === provider);
 
-  // Default to the first day with an open time, so times show straight away.
+  // The day in the URL if it has open times, otherwise the first day that does.
+  const openDays = [...new Set(providerSlots.map((s) => dayKey(s.start)))];
   const requestedDay = params.get('date');
   const selectedDay =
-    requestedDay && providerSlots.some((s) => dayKey(s.start) === requestedDay)
-      ? requestedDay
-      : providerSlots[0]
-        ? dayKey(providerSlots[0].start)
-        : null;
+    requestedDay && openDays.includes(requestedDay) ? requestedDay : (openDays[0] ?? null);
 
-  // Re-derived from live data: if someone else books it, the selection quietly disappears.
+  // Derived from live data, so a slot someone else books drops out of the selection.
   const selectedSlot = providerSlots.find((s) => s.id === selectedSlotId) ?? null;
   const step = confirmingSlot ? 2 : provider ? 1 : 0;
 
