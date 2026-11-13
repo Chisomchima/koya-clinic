@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { QueryFilter } from 'mongoose';
 import { decodeCursor, encodeCursor } from '../../lib/cursor.js';
-import { badRequest, conflict, notFound } from '../../lib/http-error.js';
+import { badRequest, conflict, notFound, unprocessable } from '../../lib/http-error.js';
 import { isDuplicateKeyError } from '../../lib/mongo-errors.js';
 import { Booking, type BookingDoc, type BookingStatus } from '../../models/booking.model.js';
 import { Slot } from '../../models/slot.model.js';
@@ -18,6 +18,18 @@ export interface BookingDto {
 
 type StoredBooking = BookingDoc & { _id: string };
 
+/** A scoped Idempotency-Key and the hash of the request body it arrived with. */
+export interface IdempotencyContext {
+  key: string;
+  requestHash: string;
+}
+
+export interface CreateBookingResult {
+  booking: BookingDto;
+  /** True when this is a retry answered with the booking an earlier request created. */
+  replayed: boolean;
+}
+
 const toBookingDto = (b: StoredBooking): BookingDto => ({
   id: b._id,
   slot_id: b.slotId,
@@ -27,13 +39,33 @@ const toBookingDto = (b: StoredBooking): BookingDto => ({
   created_at: b.createdAt.toISOString(),
 });
 
-export async function createBooking(input: CreateBookingInput): Promise<BookingDto> {
+/**
+ * Level 4: if this key already created a booking, returns that booking (a replay).
+ * Throws 422 if the key was used with a different request body.
+ */
+export async function findIdempotentBooking({
+  key,
+  requestHash,
+}: IdempotencyContext): Promise<BookingDto | null> {
+  const booking = await Booking.findOne({ idempotencyKey: key }).lean();
+  if (!booking) return null;
+  if (booking.requestHash !== requestHash) {
+    throw unprocessable('Idempotency-Key was already used with a different request body');
+  }
+  return toBookingDto(booking);
+}
+
+export async function createBooking(
+  input: CreateBookingInput,
+  idempotency?: IdempotencyContext,
+): Promise<CreateBookingResult> {
   const slot = await Slot.findById(input.slot_id).lean();
   if (!slot) throw notFound('slot not found');
   if (slot.startAt.getTime() <= Date.now()) throw badRequest('slot has already started');
 
   try {
-    // The partial unique index on slotId decides any race: only one confirmed insert succeeds.
+    // One document, one atomic write: the booking and its idempotency key are saved together.
+    // Unique indexes decide every race: one confirmed booking per slot, one booking per key.
     const booking = await Booking.create({
       _id: `bk_${randomUUID()}`,
       slotId: input.slot_id,
@@ -41,9 +73,22 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingD
       email: input.email,
       status: 'confirmed',
       createdAt: new Date(),
+      ...(idempotency && {
+        idempotencyKey: idempotency.key,
+        requestHash: idempotency.requestHash,
+      }),
     });
-    return toBookingDto(booking.toObject());
+    return { booking: toBookingDto(booking.toObject()), replayed: false };
   } catch (err) {
+    if (!isDuplicateKeyError(err)) throw err;
+
+    // Two retries with the same key raced and the other one won. The loser may be rejected
+    // by *either* unique index (both target the same slot), so check the key first:
+    // otherwise a retry could be told "slot is already booked" about its own booking.
+    if (idempotency) {
+      const winner = await findIdempotentBooking(idempotency);
+      if (winner) return { booking: winner, replayed: true };
+    }
     if (isDuplicateKeyError(err, 'slotId')) throw conflict('slot is already booked');
     throw err;
   }

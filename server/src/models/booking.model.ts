@@ -11,6 +11,13 @@ const bookingSchema = new Schema(
     email: { type: String, required: true },
     status: { type: String, enum: BOOKING_STATUSES, required: true },
     createdAt: { type: Date, required: true },
+    /**
+     * Level 4: the Idempotency-Key that created this booking (scoped, e.g. "api:<key>"),
+     * and a hash of the request body it came with. Stored on the booking itself so the
+     * booking and its key are saved in one atomic write and can never get out of step.
+     */
+    idempotencyKey: { type: String },
+    requestHash: { type: String },
   },
   { versionKey: false },
 );
@@ -26,6 +33,16 @@ bookingSchema.index(
     unique: true,
     partialFilterExpression: { status: 'confirmed' },
     name: 'one_confirmed_per_slot',
+  },
+);
+
+/** Level 4: each Idempotency-Key can create at most one booking. */
+bookingSchema.index(
+  { idempotencyKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { idempotencyKey: { $type: 'string' } },
+    name: 'one_booking_per_idempotency_key',
   },
 );
 

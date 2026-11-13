@@ -4,7 +4,12 @@ import { BookingIdParams, CreateBookingBody, ListBookingsQuery } from './booking
 import * as bookings from './bookings.service.js';
 
 export const create: RequestHandler = async (req, res) => {
-  res.status(201).json(await bookings.createBooking(validate(CreateBookingBody, req.body)));
+  const { booking, replayed } = await bookings.createBooking(
+    validate(CreateBookingBody, req.body),
+    res.locals.idempotency,
+  );
+  if (replayed) res.set('Idempotent-Replayed', 'true');
+  res.status(201).json(booking);
 };
 
 export const list: RequestHandler = async (req, res) => {

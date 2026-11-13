@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import { env } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 import { Booking } from '../models/booking.model.js';
-import { IdempotencyKey } from '../models/idempotency-key.model.js';
 import { RateLimit } from '../models/rate-limit.model.js';
 import { Slot } from '../models/slot.model.js';
 
@@ -20,7 +19,7 @@ let connecting: Promise<typeof mongoose> | undefined;
 export function connectDb(uri = env.MONGODB_URI, dbName = env.MONGODB_DB) {
   connecting ??= (async () => {
     const conn = await mongoose.connect(uri, { dbName, serverSelectionTimeoutMS: 10_000 });
-    await Promise.all([Slot, Booking, IdempotencyKey, RateLimit].map((m) => m.createIndexes()));
+    await Promise.all([Slot, Booking, RateLimit].map((m) => m.createIndexes()));
     logger.info({ db: dbName }, 'connected to MongoDB');
     return conn;
   })().catch((err: unknown) => {

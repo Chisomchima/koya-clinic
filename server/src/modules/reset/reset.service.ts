@@ -1,17 +1,11 @@
 import { Booking } from '../../models/booking.model.js';
-import { IdempotencyKey } from '../../models/idempotency-key.model.js';
 import { RateLimit } from '../../models/rate-limit.model.js';
 import { Slot } from '../../models/slot.model.js';
 import type { ResetInput } from './reset.schema.js';
 
-/** Deletes every booking (and the state that goes with them) and replaces all slots. */
+/** Deletes every booking (and the rate-limit state that goes with them) and replaces all slots. */
 export async function resetAll({ slots }: ResetInput) {
-  await Promise.all([
-    Booking.deleteMany({}),
-    Slot.deleteMany({}),
-    IdempotencyKey.deleteMany({}),
-    RateLimit.deleteMany({}),
-  ]);
+  await Promise.all([Booking.deleteMany({}), Slot.deleteMany({}), RateLimit.deleteMany({})]);
   if (slots.length > 0) {
     await Slot.insertMany(
       slots.map((s) => ({
