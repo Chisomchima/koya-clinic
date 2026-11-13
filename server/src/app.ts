@@ -13,7 +13,7 @@ import { webRouter } from './routes/web.routes.js';
 
 const DEFAULT_CLIENT_DIR = fileURLToPath(new URL('../../client/dist', import.meta.url));
 
-/** Client-side routes of the React app. They must not collide with API paths. */
+// The React app's routes; they must not collide with API paths.
 const CLIENT_ROUTES = ['/', '/book', '/booking/:id'];
 
 export function createApp({ clientDir = DEFAULT_CLIENT_DIR } = {}): Express {
@@ -29,7 +29,7 @@ export function createApp({ clientDir = DEFAULT_CLIENT_DIR } = {}): Express {
     res.json({ ok: true });
   });
 
-  // Make sure the database (and its indexes) is ready before any data route runs.
+  // The database and its indexes must be ready before any data route runs.
   app.use(async (_req, _res, next) => {
     await connectDb();
     next();
@@ -37,7 +37,7 @@ export function createApp({ clientDir = DEFAULT_CLIENT_DIR } = {}): Express {
 
   app.use('/web', webRouter);
 
-  // Serve the built React app, if it exists, from the same origin.
+  // The built React app, served from the same origin.
   if (existsSync(clientDir)) {
     app.use(express.static(clientDir, { index: false, maxAge: '1h' }));
     app.get(CLIENT_ROUTES, (_req, res) => {

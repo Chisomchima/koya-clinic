@@ -3,7 +3,7 @@ import { RateLimit } from '../../models/rate-limit.model.js';
 import { Slot } from '../../models/slot.model.js';
 import type { ResetInput } from './reset.schema.js';
 
-/** Deletes every booking (and the rate-limit state that goes with them) and replaces all slots. */
+/** Deletes every booking and rate-limit record, and replaces all slots. */
 export async function resetAll({ slots }: ResetInput) {
   await Promise.all([Booking.deleteMany({}), Slot.deleteMany({}), RateLimit.deleteMany({})]);
   if (slots.length > 0) {
@@ -14,7 +14,6 @@ export async function resetAll({ slots }: ResetInput) {
         start: s.start,
         end: s.end,
         startAt: new Date(s.start),
-        endAt: new Date(s.end),
       })),
     );
   }

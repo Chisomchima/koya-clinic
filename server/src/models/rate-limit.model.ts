@@ -1,12 +1,12 @@
 import { Schema, model } from 'mongoose';
 
-/** One document per rate-limited key, holding the timestamps of recent attempts. */
+/** Recent attempt timestamps for one key, e.g. "email:ada@example.com". */
 const rateLimitSchema = new Schema(
   {
     _id: { type: String, required: true },
     hits: { type: [Date], default: [] },
-    allowed: { type: Boolean },
-    checkedAt: { type: Date },
+    allowed: Boolean,
+    checkedAt: Date,
     expiresAt: { type: Date, required: true },
   },
   { versionKey: false },

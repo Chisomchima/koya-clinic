@@ -1,15 +1,7 @@
 import { Booking } from '../../models/booking.model.js';
 import { Slot, type SlotDoc } from '../../models/slot.model.js';
 
-export interface SlotDto {
-  id: string;
-  provider: string;
-  start: string;
-  end: string;
-  available: boolean;
-}
-
-const toSlotDto = (slot: SlotDoc & { _id: string }, available: boolean): SlotDto => ({
+const toSlotDto = (slot: SlotDoc & { _id: string }, available: boolean) => ({
   id: slot._id,
   provider: slot.provider,
   start: slot.start,

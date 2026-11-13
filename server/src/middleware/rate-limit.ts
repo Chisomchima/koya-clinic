@@ -3,7 +3,7 @@ import { tooManyRequests } from '../lib/http-error.js';
 import { consumeRateLimit, type RateLimitRule } from '../lib/rate-limiter.js';
 
 interface RateLimitOptions extends RateLimitRule {
-  /** Which bucket this request counts against. Returning undefined skips the limit. */
+  /** The bucket this request counts against; undefined skips the limit. */
   keyFor: (req: Request) => string | undefined;
   message: string;
 }
@@ -11,9 +11,8 @@ interface RateLimitOptions extends RateLimitRule {
 export function rateLimit({ keyFor, message, ...rule }: RateLimitOptions): RequestHandler {
   return async (req, _res, next) => {
     const key = keyFor(req);
-    if (key === undefined) return next();
-    const result = await consumeRateLimit(key, rule);
-    if (!result.allowed) throw tooManyRequests(message, result.retryAfterSeconds);
+    const blocked = key === undefined ? null : await consumeRateLimit(key, rule);
+    if (blocked) throw tooManyRequests(message, blocked.retryAfterSeconds);
     next();
   };
 }

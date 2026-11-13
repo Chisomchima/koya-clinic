@@ -4,12 +4,9 @@ const slotSchema = new Schema(
   {
     _id: { type: String, required: true },
     provider: { type: String, required: true },
-    /** `start` / `end` are echoed back exactly as the client sent them. */
-    start: { type: String, required: true },
+    start: { type: String, required: true }, // echoed back exactly as sent
     end: { type: String, required: true },
-    /** Parsed copies, used for sorting and "has this slot started?" checks. */
-    startAt: { type: Date, required: true },
-    endAt: { type: Date, required: true },
+    startAt: { type: Date, required: true }, // parsed `start`, for sorting and "has it started?"
   },
   { versionKey: false },
 );

@@ -1,10 +1,5 @@
-/**
- * Fills a running server with a week of demo slots via POST /reset.
- * WARNING: /reset deletes every existing booking.
- *
- *   npm run seed -w server                                  # local server, key from .env
- *   SEED_BASE_URL=https://your-api.example.com npm run seed -w server
- */
+// Loads a week of demo slots via POST /reset (which deletes every booking).
+// Usage: npm run seed -w server   (set SEED_BASE_URL to seed a deployed server)
 const baseUrl = (
   process.env.SEED_BASE_URL ?? `http://localhost:${process.env.PORT ?? 4000}`
 ).replace(/\/$/, '');

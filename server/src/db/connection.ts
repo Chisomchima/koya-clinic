@@ -6,16 +6,12 @@ import { RateLimit } from '../models/rate-limit.model.js';
 import { Slot } from '../models/slot.model.js';
 
 mongoose.set('strictQuery', true);
-// Indexes are created explicitly below, so they are guaranteed to exist
-// (the double-booking guarantee depends on one) before any request is served.
+// Indexes are created explicitly before serving: the double-booking guarantee depends on one.
 mongoose.set('autoIndex', false);
 
 let connecting: Promise<typeof mongoose> | undefined;
 
-/**
- * Connects once per process and reuses the connection afterwards. That also makes it
- * safe on serverless hosts, where one warm instance serves many requests.
- */
+/** Connects once per process and reuses the connection. */
 export function connectDb(uri = env.MONGODB_URI, dbName = env.MONGODB_DB) {
   connecting ??= (async () => {
     const conn = await mongoose.connect(uri, { dbName, serverSelectionTimeoutMS: 10_000 });

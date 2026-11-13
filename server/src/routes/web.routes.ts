@@ -5,9 +5,8 @@ import * as bookings from '../modules/bookings/bookings.controller.js';
 import * as slots from '../modules/slots/slots.controller.js';
 
 /**
- * Backend-for-frontend for the web page. It runs the same handlers as the API, but
- * the browser never needs the API key: the key would be visible to anyone who opened
- * dev tools. It only exposes what a patient needs (no /reset, no listing by email).
+ * The web page's backend: the same handlers as the API, without the API key (which anyone
+ * could read in the browser). Only patient actions: no /reset, no listing by email.
  */
 export const webRouter = Router();
 

@@ -1,12 +1,9 @@
 import { RateLimit } from '../models/rate-limit.model.js';
-import { isDuplicateKeyError } from './mongo-errors.js';
 
 export interface RateLimitRule {
   limit: number;
   windowMs: number;
 }
-
-export type RateLimitResult = { allowed: true } | { allowed: false; retryAfterSeconds: number };
 
 interface RateLimitState {
   hits: Date[];
@@ -15,57 +12,39 @@ interface RateLimitState {
 }
 
 /**
- * Records one attempt for `key` using a sliding window, and says whether it is allowed.
- *
- * The whole check-and-record runs as one atomic update on a single document, using
- * the database clock ($$NOW). So a burst of simultaneous requests, even across several
- * server instances, can never let more than `limit` attempts through.
- * Blocked attempts are not recorded, so a blocked client isn't locked out longer than the window.
+ * Records an attempt for `key` in a sliding window and returns how long to wait if it is
+ * over the limit (or null if allowed). The check and the write are one atomic update on one
+ * document, timed by the database clock, so concurrent requests can't exceed the limit.
+ * Blocked attempts aren't recorded.
  */
-export async function consumeRateLimit(
-  key: string,
-  { limit, windowMs }: RateLimitRule,
-): Promise<RateLimitResult> {
-  const windowStart = { $subtract: ['$$NOW', windowMs] };
-  const pipeline = [
-    {
-      $set: {
-        hits: {
-          $filter: {
-            input: { $ifNull: ['$hits', []] },
-            as: 'h',
-            cond: { $gt: ['$$h', windowStart] },
+export async function consumeRateLimit(key: string, { limit, windowMs }: RateLimitRule) {
+  const state = (await RateLimit.collection.findOneAndUpdate(
+    { _id: key } as never,
+    [
+      // drop attempts that have left the window
+      {
+        $set: {
+          hits: {
+            $filter: {
+              input: { $ifNull: ['$hits', []] },
+              cond: { $gt: ['$$this', { $subtract: ['$$NOW', windowMs] }] },
+            },
           },
         },
       },
-    },
-    { $set: { allowed: { $lt: [{ $size: '$hits' }, limit] }, checkedAt: '$$NOW' } },
-    {
-      $set: {
-        hits: { $cond: ['$allowed', { $concatArrays: ['$hits', ['$$NOW']] }, '$hits'] },
-        expiresAt: { $add: ['$$NOW', windowMs] },
+      { $set: { allowed: { $lt: [{ $size: '$hits' }, limit] }, checkedAt: '$$NOW' } },
+      // record this attempt only if it is allowed
+      {
+        $set: {
+          hits: { $cond: ['$allowed', { $concatArrays: ['$hits', ['$$NOW']] }, '$hits'] },
+          expiresAt: { $add: ['$$NOW', windowMs] },
+        },
       },
-    },
-  ];
+    ],
+    { upsert: true, returnDocument: 'after' },
+  )) as RateLimitState | null;
 
-  const update = () =>
-    RateLimit.collection.findOneAndUpdate({ _id: key } as never, pipeline, {
-      upsert: true,
-      returnDocument: 'after',
-    }) as Promise<RateLimitState | null>;
-
-  let state: RateLimitState | null;
-  try {
-    state = await update();
-  } catch (err) {
-    // Two first-ever attempts can race to create the document. One wins; retry the other.
-    if (!isDuplicateKeyError(err)) throw err;
-    state = await update();
-  }
-  if (!state) throw new Error(`rate limit update returned no document for ${key}`);
-  if (state.allowed) return { allowed: true };
-
-  const oldest = state.hits[0]?.getTime() ?? state.checkedAt.getTime();
-  const msLeft = oldest + windowMs - state.checkedAt.getTime();
-  return { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil(msLeft / 1000)) };
+  if (!state || state.allowed) return null;
+  const msLeft = state.hits[0]!.getTime() + windowMs - state.checkedAt.getTime();
+  return { retryAfterSeconds: Math.max(1, Math.ceil(msLeft / 1000)) };
 }
