@@ -29,5 +29,8 @@ bookingSchema.index(
   },
 );
 
+/** Level 4: a person's bookings, oldest first, for cursor pagination. */
+bookingSchema.index({ email: 1, createdAt: 1, _id: 1 });
+
 export type BookingDoc = InferSchemaType<typeof bookingSchema>;
 export const Booking = model('Booking', bookingSchema);

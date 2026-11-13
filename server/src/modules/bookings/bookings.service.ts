@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
+import type { QueryFilter } from 'mongoose';
+import { decodeCursor, encodeCursor } from '../../lib/cursor.js';
 import { badRequest, conflict, notFound } from '../../lib/http-error.js';
 import { isDuplicateKeyError } from '../../lib/mongo-errors.js';
 import { Booking, type BookingDoc, type BookingStatus } from '../../models/booking.model.js';
 import { Slot } from '../../models/slot.model.js';
-import type { CreateBookingInput } from './bookings.schema.js';
+import type { CreateBookingInput, ListBookingsInput } from './bookings.schema.js';
 
 export interface BookingDto {
   id: string;
@@ -64,4 +66,35 @@ export async function cancelBooking(id: string): Promise<BookingDto> {
 
   const exists = await Booking.exists({ _id: id });
   throw exists ? conflict('booking is already cancelled') : notFound('booking not found');
+}
+
+/**
+ * One person's bookings, oldest first, using keyset (cursor) pagination on (createdAt, id).
+ * Unlike offset paging, pages don't shift or repeat when new bookings are added.
+ */
+export async function listBookings({ email, limit, cursor }: ListBookingsInput) {
+  const filter: QueryFilter<StoredBooking> = { email };
+  if (cursor !== undefined) {
+    const after = decodeCursor(cursor);
+    filter.$or = [
+      { createdAt: { $gt: after.createdAt } },
+      { createdAt: after.createdAt, _id: { $gt: after.id } },
+    ];
+  }
+
+  // Fetch one extra row to learn whether there is another page.
+  const rows = await Booking.find(filter)
+    .sort({ createdAt: 1, _id: 1 })
+    .limit(limit + 1)
+    .lean();
+  const page = rows.slice(0, limit);
+  const last = page.at(-1);
+
+  return {
+    bookings: page.map(toBookingDto),
+    next_cursor:
+      rows.length > limit && last
+        ? encodeCursor({ createdAt: last.createdAt, id: last._id })
+        : null,
+  };
 }

@@ -13,5 +13,6 @@ apiRouter.use(requireApiKey(env.API_KEY));
 apiRouter.post('/reset', resetController.reset);
 apiRouter.get('/slots', slots.list);
 apiRouter.post('/bookings', bookings.create);
+apiRouter.get('/bookings', bookings.list);
 apiRouter.get('/bookings/:id', bookings.getById);
 apiRouter.delete('/bookings/:id', bookings.cancel);

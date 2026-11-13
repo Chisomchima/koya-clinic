@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PAGINATION } from '../../config/constants.js';
 
 /** Trims, then lower-cases. Used for storing and for matching (and rate-limiting) emails. */
 export const normalizeEmail = (value: unknown) =>
@@ -27,6 +28,23 @@ export const CreateBookingBody = z.object(
   { error: 'request body must be a JSON object' },
 );
 
+const limitMessage = `limit must be an integer from ${PAGINATION.minLimit} to ${PAGINATION.maxLimit}`;
+
+export const ListBookingsQuery = z.object({
+  email: z
+    .string({ error: 'email is required' })
+    .transform(normalizeEmail)
+    .pipe(z.string().min(1, 'email is required')),
+  limit: z
+    .string({ error: limitMessage })
+    .regex(/^\d+$/, limitMessage)
+    .transform(Number)
+    .pipe(z.number().min(PAGINATION.minLimit, limitMessage).max(PAGINATION.maxLimit, limitMessage))
+    .default(PAGINATION.defaultLimit),
+  cursor: z.string({ error: 'cursor is not valid' }).optional(),
+});
+
 export const BookingIdParams = z.object({ id: z.string().min(1) });
 
 export type CreateBookingInput = z.infer<typeof CreateBookingBody>;
+export type ListBookingsInput = z.infer<typeof ListBookingsQuery>;
