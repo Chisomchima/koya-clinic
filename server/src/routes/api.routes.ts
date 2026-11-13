@@ -14,3 +14,4 @@ apiRouter.post('/reset', resetController.reset);
 apiRouter.get('/slots', slots.list);
 apiRouter.post('/bookings', bookings.create);
 apiRouter.get('/bookings/:id', bookings.getById);
+apiRouter.delete('/bookings/:id', bookings.cancel);

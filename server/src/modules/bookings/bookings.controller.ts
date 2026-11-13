@@ -10,3 +10,7 @@ export const create: RequestHandler = async (req, res) => {
 export const getById: RequestHandler = async (req, res) => {
   res.json(await bookings.getBooking(validate(BookingIdParams, req.params).id));
 };
+
+export const cancel: RequestHandler = async (req, res) => {
+  res.json(await bookings.cancelBooking(validate(BookingIdParams, req.params).id));
+};

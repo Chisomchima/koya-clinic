@@ -15,5 +15,19 @@ const bookingSchema = new Schema(
   { versionKey: false },
 );
 
+/**
+ * Level 3: the database refuses a second *confirmed* booking for a slot.
+ * However many requests race, only one insert can succeed. Cancelled
+ * bookings fall outside the index, so a cancelled slot can be booked again.
+ */
+bookingSchema.index(
+  { slotId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: 'confirmed' },
+    name: 'one_confirmed_per_slot',
+  },
+);
+
 export type BookingDoc = InferSchemaType<typeof bookingSchema>;
 export const Booking = model('Booking', bookingSchema);
