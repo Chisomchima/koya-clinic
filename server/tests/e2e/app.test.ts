@@ -8,6 +8,16 @@ describe('server basics', () => {
     expect(res.body).toEqual({ ok: true });
   });
 
+  it('serves interactive API docs at /docs without a key', async () => {
+    const page = await api('GET', '/docs/', { apiKey: null });
+    expect(page.status).toBe(200);
+    expect(page.body).toContain('swagger-ui');
+
+    const init = await api('GET', '/docs/swagger-ui-init.js', { apiKey: null });
+    expect(init.status).toBe(200);
+    expect(init.body).toContain('/bookings/{id}'); // the spec is embedded
+  });
+
   it.each(['/', '/book', '/booking/KC-ABCDE-FGHJK'])('serves the web page at %s', async (path) => {
     const res = await api('GET', path, { apiKey: null });
     expect(res.status).toBe(200);

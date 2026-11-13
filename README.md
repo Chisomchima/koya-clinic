@@ -14,6 +14,7 @@ cp server/.env.example server/.env   # set MONGODB_URI and API_KEY
 npm run dev                          # API :4000, page http://localhost:5173
 npm run seed -w server               # a week of demo slots (wipes bookings)
 npm test                             # all server and client tests
+# interactive API docs: http://localhost:4000/docs
 ```
 
 ## How each level is solved

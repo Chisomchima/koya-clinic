@@ -9,6 +9,7 @@ import { connectDb } from './db/connection.js';
 import { logger } from './lib/logger.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { apiRouter } from './routes/api.routes.js';
+import { docsRouter } from './routes/docs.routes.js';
 import { webRouter } from './routes/web.routes.js';
 
 const DEFAULT_CLIENT_DIR = fileURLToPath(new URL('../../client/dist', import.meta.url));
@@ -28,6 +29,7 @@ export function createApp({ clientDir = DEFAULT_CLIENT_DIR } = {}): Express {
   app.get('/health', (_req, res) => {
     res.json({ ok: true });
   });
+  app.use('/docs', docsRouter);
 
   // The database and its indexes must be ready before any data route runs.
   app.use(async (_req, _res, next) => {

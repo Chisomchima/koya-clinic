@@ -3,9 +3,23 @@
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "client/dist",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "{docs/openapi.json,node_modules/swagger-ui-dist/**}"
+    }
+  },
   "rewrites": [
-    { "source": "/book", "destination": "/index.html" },
-    { "source": "/booking/:id", "destination": "/index.html" },
-    { "source": "/(.*)", "destination": "/api" }
+    {
+      "source": "/book",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/booking/:id",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
   ]
 }
