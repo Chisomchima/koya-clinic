@@ -34,17 +34,22 @@ describe('web page routes', () => {
   });
 
   it('limits booking attempts per IP, and a faked X-Forwarded-For does not get around it', async () => {
-    // Behind one proxy, the server trusts only the right-most X-Forwarded-For entry (the one
-    // the proxy adds). Faking the entries to its left must not create a fresh rate-limit bucket.
+    // Every attempt fakes a different left-most X-Forwarded-For entry. The server only trusts
+    // the right-most one (added by the proxy), so all of them share one bucket of 20.
+    // Earlier tests in this file may already have used part of that bucket.
     const attempt = (i: number) =>
       web('POST', '/bookings', {
         body: { slot_id: 'no-such-slot', name: 'Spammer', email: uniqueEmail(`ip${i}`) },
         headers: { 'X-Forwarded-For': `10.0.0.${i}, 203.0.113.7` },
       });
 
-    for (let i = 0; i < 20; i++) expect((await attempt(i)).status).toBe(404);
-    const blocked = await attempt(20);
-    expect(blocked.status).toBe(429);
-    expect(Number(blocked.headers.get('retry-after'))).toBeGreaterThanOrEqual(1);
+    let blocked;
+    for (let i = 0; i <= 20 && !blocked; i++) {
+      const res = await attempt(i);
+      if (res.status === 429) blocked = res;
+      else expect(res.status).toBe(404);
+    }
+    expect(blocked, 'expected a 429 within 21 attempts').toBeDefined();
+    expect(Number(blocked!.headers.get('retry-after'))).toBeGreaterThanOrEqual(1);
   });
 });
