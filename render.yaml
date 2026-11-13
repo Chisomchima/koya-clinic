@@ -1,0 +1,20 @@
+# Render Blueprint: one web service runs the API and serves the React page.
+services:
+  - type: web
+    name: koya-booking
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_DB
+        value: koya_booking
+      - key: MONGODB_URI
+        sync: false
+      - key: API_KEY
+        sync: false
