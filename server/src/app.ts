@@ -5,6 +5,7 @@ import { env } from './config/env.js';
 import { connectDb } from './db/connection.js';
 import { logger } from './lib/logger.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
+import { apiRouter } from './routes/api.routes.js';
 
 export function createApp(): Express {
   const app = express();
@@ -25,6 +26,7 @@ export function createApp(): Express {
     next();
   });
 
+  app.use(apiRouter);
   app.use(notFoundHandler);
   app.use(errorHandler);
 
